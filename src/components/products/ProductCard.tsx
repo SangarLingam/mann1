@@ -1,25 +1,27 @@
 import { Link } from 'react-router-dom';
 import { ShoppingBag, Heart } from 'lucide-react';
-import { Product } from '@/types/product';
+import { ProductWithStock } from '@/hooks/useProducts';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
 interface ProductCardProps {
-  product: Product;
+  product: ProductWithStock;
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const totalStock = product.sizes.reduce((sum, s) => sum + s.quantity, 0);
-  const discount = product.originalPrice
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+  const totalStock = product.stock.reduce((sum, s) => sum + s.quantity, 0);
+  const discount = product.original_price
+    ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
     : 0;
+
+  const sizes: Array<'S' | 'M' | 'L' | 'XL' | 'XXL'> = ['S', 'M', 'L', 'XL', 'XXL'];
 
   return (
     <div className="group bg-card rounded-xl overflow-hidden shadow-soft hover-lift">
       {/* Image Container */}
       <div className="relative aspect-[3/4] bg-muted overflow-hidden">
         <img
-          src={product.image}
+          src={product.image_url || '/placeholder.svg'}
           alt={product.name}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
@@ -31,9 +33,14 @@ export function ProductCard({ product }: ProductCardProps) {
               -{discount}%
             </Badge>
           )}
-          {totalStock < 10 && (
+          {totalStock < 10 && totalStock > 0 && (
             <Badge variant="destructive">
               Low Stock
+            </Badge>
+          )}
+          {totalStock === 0 && (
+            <Badge variant="destructive">
+              Out of Stock
             </Badge>
           )}
         </div>
@@ -67,26 +74,30 @@ export function ProductCard({ product }: ProductCardProps) {
           </h3>
         </Link>
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-lg">₹{product.price.toLocaleString()}</span>
-          {product.originalPrice && (
+          <span className="font-semibold text-lg">₹{Number(product.price).toLocaleString()}</span>
+          {product.original_price && (
             <span className="text-muted-foreground line-through text-sm">
-              ₹{product.originalPrice.toLocaleString()}
+              ₹{Number(product.original_price).toLocaleString()}
             </span>
           )}
         </div>
         <div className="flex gap-1 pt-1">
-          {product.sizes.map((size) => (
-            <span
-              key={size.size}
-              className={`text-xs px-2 py-1 rounded border ${
-                size.quantity > 0
-                  ? 'border-border text-muted-foreground'
-                  : 'border-border/50 text-muted-foreground/50 line-through'
-              }`}
-            >
-              {size.size}
-            </span>
-          ))}
+          {sizes.map((size) => {
+            const sizeStock = product.stock.find((s) => s.size === size);
+            const quantity = sizeStock?.quantity || 0;
+            return (
+              <span
+                key={size}
+                className={`text-xs px-2 py-1 rounded border ${
+                  quantity > 0
+                    ? 'border-border text-muted-foreground'
+                    : 'border-border/50 text-muted-foreground/50 line-through'
+                }`}
+              >
+                {size}
+              </span>
+            );
+          })}
         </div>
       </div>
     </div>

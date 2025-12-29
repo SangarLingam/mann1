@@ -14,9 +14,10 @@ import {
   TrendingDown,
   DollarSign,
   Boxes,
+  Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { products } from '@/data/products';
+import { useProducts } from '@/hooks/useProducts';
 import { cn } from '@/lib/utils';
 
 const sidebarItems = [
@@ -28,44 +29,50 @@ const sidebarItems = [
   { icon: Settings, label: 'Settings' },
 ];
 
-const stats = [
-  {
-    label: 'Total Revenue',
-    value: '₹4,52,890',
-    change: '+12.5%',
-    trend: 'up',
-    icon: DollarSign,
-  },
-  {
-    label: 'Total Orders',
-    value: '1,247',
-    change: '+8.2%',
-    trend: 'up',
-    icon: ShoppingCart,
-  },
-  {
-    label: 'Products',
-    value: products.length.toString(),
-    change: '+2',
-    trend: 'up',
-    icon: Package,
-  },
-  {
-    label: 'Low Stock Items',
-    value: '3',
-    change: '-2',
-    trend: 'down',
-    icon: Boxes,
-  },
-];
-
 export default function Admin() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const { data: products, isLoading } = useProducts();
 
-  const totalStock = products.reduce(
-    (sum, p) => sum + p.sizes.reduce((s, size) => s + size.quantity, 0),
+  const totalStock = products?.reduce(
+    (sum, p) => sum + p.stock.reduce((s, size) => s + size.quantity, 0),
     0
-  );
+  ) || 0;
+
+  const lowStockCount = products?.filter(p => {
+    const stock = p.stock.reduce((s, size) => s + size.quantity, 0);
+    return stock > 0 && stock < 20;
+  }).length || 0;
+
+  const stats = [
+    {
+      label: 'Total Revenue',
+      value: '₹4,52,890',
+      change: '+12.5%',
+      trend: 'up' as const,
+      icon: DollarSign,
+    },
+    {
+      label: 'Total Orders',
+      value: '1,247',
+      change: '+8.2%',
+      trend: 'up' as const,
+      icon: ShoppingCart,
+    },
+    {
+      label: 'Products',
+      value: (products?.length || 0).toString(),
+      change: '+2',
+      trend: 'up' as const,
+      icon: Package,
+    },
+    {
+      label: 'Low Stock Items',
+      value: lowStockCount.toString(),
+      change: '-2',
+      trend: 'down' as const,
+      icon: Boxes,
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -175,72 +182,79 @@ export default function Admin() {
             <div className="p-6 border-b border-border">
               <h2 className="font-display text-xl font-semibold">Products</h2>
               <p className="text-muted-foreground text-sm">
-                {products.length} products • {totalStock} total units in stock
+                {products?.length || 0} products • {totalStock} total units in stock
               </p>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-secondary">
-                  <tr>
-                    <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">
-                      Product
-                    </th>
-                    <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">
-                      Category
-                    </th>
-                    <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">
-                      Price
-                    </th>
-                    <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">
-                      Stock
-                    </th>
-                    <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {products.map((product) => {
-                    const stock = product.sizes.reduce((s, size) => s + size.quantity, 0);
-                    return (
-                      <tr key={product.id} className="border-b border-border hover:bg-secondary/50 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 bg-muted rounded-lg overflow-hidden">
-                              <img
-                                src={product.image}
-                                alt={product.name}
-                                className="w-full h-full object-cover"
-                              />
+            
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-gold" />
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-secondary">
+                    <tr>
+                      <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">
+                        Product
+                      </th>
+                      <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">
+                        Category
+                      </th>
+                      <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">
+                        Price
+                      </th>
+                      <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">
+                        Stock
+                      </th>
+                      <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {products?.map((product) => {
+                      const stock = product.stock.reduce((s, size) => s + size.quantity, 0);
+                      return (
+                        <tr key={product.id} className="border-b border-border hover:bg-secondary/50 transition-colors">
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-12 h-12 bg-muted rounded-lg overflow-hidden">
+                                <img
+                                  src={product.image_url || '/placeholder.svg'}
+                                  alt={product.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              <span className="font-medium">{product.name}</span>
                             </div>
-                            <span className="font-medium">{product.name}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-muted-foreground">
-                          {product.category}
-                        </td>
-                        <td className="px-6 py-4">₹{product.price.toLocaleString()}</td>
-                        <td className="px-6 py-4">{stock} units</td>
-                        <td className="px-6 py-4">
-                          <span
-                            className={cn(
-                              'px-3 py-1 rounded-full text-xs font-medium',
-                              stock > 20
-                                ? 'bg-green-100 text-green-700'
-                                : stock > 5
-                                ? 'bg-yellow-100 text-yellow-700'
-                                : 'bg-red-100 text-red-700'
-                            )}
-                          >
-                            {stock > 20 ? 'In Stock' : stock > 5 ? 'Low Stock' : 'Critical'}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                          </td>
+                          <td className="px-6 py-4 text-muted-foreground">
+                            {product.category}
+                          </td>
+                          <td className="px-6 py-4">₹{Number(product.price).toLocaleString()}</td>
+                          <td className="px-6 py-4">{stock} units</td>
+                          <td className="px-6 py-4">
+                            <span
+                              className={cn(
+                                'px-3 py-1 rounded-full text-xs font-medium',
+                                stock > 20
+                                  ? 'bg-green-100 text-green-700'
+                                  : stock > 5
+                                  ? 'bg-yellow-100 text-yellow-700'
+                                  : 'bg-red-100 text-red-700'
+                              )}
+                            >
+                              {stock > 20 ? 'In Stock' : stock > 5 ? 'Low Stock' : 'Critical'}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       </main>
