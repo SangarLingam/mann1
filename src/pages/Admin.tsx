@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Package,
@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useProducts } from '@/hooks/useProducts';
+import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 
 const sidebarItems = [
@@ -31,7 +32,42 @@ const sidebarItems = [
 
 export default function Admin() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const { data: products, isLoading } = useProducts();
+  const { data: products, isLoading: productsLoading } = useProducts();
+  const { user, isLoading: authLoading, isStaff, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect if not authenticated or not staff
+  useEffect(() => {
+    if (!authLoading && (!user || !isStaff)) {
+      navigate('/admin/auth');
+    }
+  }, [user, authLoading, isStaff, navigate]);
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/admin/auth');
+  };
+
+  // Show loading state while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-gold" />
+      </div>
+    );
+  }
+
+  // Don't render if not authorized (will redirect)
+  if (!user || !isStaff) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-gold mx-auto mb-4" />
+          <p className="text-muted-foreground">Checking access permissions...</p>
+        </div>
+      </div>
+    );
+  }
 
   const totalStock = products?.reduce(
     (sum, p) => sum + p.stock.reduce((s, size) => s + size.quantity, 0),
@@ -115,13 +151,20 @@ export default function Admin() {
           ))}
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-charcoal-light">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-charcoal-light space-y-2">
           <Link to="/">
             <button className="w-full flex items-center gap-4 px-2 py-3 text-cream/70 hover:text-cream transition-colors">
               <LogOut className="h-5 w-5" />
               {sidebarOpen && <span>Back to Store</span>}
             </button>
           </Link>
+          <button 
+            onClick={handleSignOut}
+            className="w-full flex items-center gap-4 px-2 py-3 text-red-400 hover:text-red-300 transition-colors"
+          >
+            <LogOut className="h-5 w-5" />
+            {sidebarOpen && <span>Sign Out</span>}
+          </button>
         </div>
       </aside>
 
@@ -137,7 +180,7 @@ export default function Admin() {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h1 className="font-display text-3xl font-bold">Dashboard</h1>
-              <p className="text-muted-foreground">Welcome back, Admin</p>
+              <p className="text-muted-foreground">Welcome back, {user.email}</p>
             </div>
             <Button variant="gold">
               <Plus className="h-4 w-4 mr-2" />
@@ -186,7 +229,7 @@ export default function Admin() {
               </p>
             </div>
             
-            {isLoading ? (
+            {productsLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-gold" />
               </div>

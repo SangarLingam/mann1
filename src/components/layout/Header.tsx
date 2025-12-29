@@ -54,7 +54,7 @@ export function Header() {
 
           {/* Actions */}
           <div className="flex items-center gap-4">
-            <Link to="/admin" className="hidden md:block">
+            <Link to="/admin/auth" className="hidden md:block">
               <Button variant="ghost" size="icon">
                 <User className="h-5 w-5" />
               </Button>
@@ -104,7 +104,7 @@ export function Header() {
                 </Link>
               ))}
               <Link
-                to="/admin"
+                to="/admin/auth"
                 onClick={() => setIsMenuOpen(false)}
                 className="text-lg font-medium tracking-wide transition-colors hover:text-gold py-2"
               >
