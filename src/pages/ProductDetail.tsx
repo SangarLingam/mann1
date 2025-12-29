@@ -1,21 +1,32 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Minus, Plus, ShoppingBag, Heart, Share2, Check } from 'lucide-react';
+import { ArrowLeft, Minus, Plus, ShoppingBag, Heart, Share2, Check, Loader2 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { products } from '@/data/products';
+import { useProduct } from '@/hooks/useProducts';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
 
 export default function ProductDetail() {
   const { id } = useParams();
   const { addToCart } = useCart();
+  const { data: product, isLoading } = useProduct(id || '');
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
 
-  const product = products.find((p) => p.id === id);
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="pt-32 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-gold" />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -32,11 +43,13 @@ export default function ProductDetail() {
     );
   }
 
-  const selectedSizeStock = product.sizes.find((s) => s.size === selectedSize);
+  const selectedSizeStock = product.stock.find((s) => s.size === selectedSize);
   const maxQuantity = selectedSizeStock?.quantity || 0;
-  const discount = product.originalPrice
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+  const discount = product.original_price
+    ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
     : 0;
+
+  const sizes: Array<'S' | 'M' | 'L' | 'XL' | 'XXL'> = ['S', 'M', 'L', 'XL', 'XXL'];
 
   const handleAddToCart = () => {
     if (!selectedSize) {
@@ -47,7 +60,23 @@ export default function ProductDetail() {
       toast.error('Not enough stock available');
       return;
     }
-    addToCart(product, selectedSize, quantity);
+    
+    // Create a cart-compatible product object
+    const cartProduct = {
+      id: product.id,
+      name: product.name,
+      description: product.description || '',
+      pantDetails: product.pant_details,
+      shirtDetails: product.shirt_details,
+      price: Number(product.price),
+      originalPrice: product.original_price ? Number(product.original_price) : undefined,
+      image: product.image_url || '/placeholder.svg',
+      sizes: product.stock.map(s => ({ size: s.size, quantity: s.quantity })),
+      category: product.category,
+      featured: product.featured || false,
+    };
+    
+    addToCart(cartProduct, selectedSize, quantity);
   };
 
   return (
@@ -69,7 +98,7 @@ export default function ProductDetail() {
             {/* Product Image */}
             <div className="relative aspect-square bg-muted rounded-2xl overflow-hidden animate-fade-in">
               <img
-                src={product.image}
+                src={product.image_url || '/placeholder.svg'}
                 alt={product.name}
                 className="w-full h-full object-cover"
               />
@@ -99,14 +128,14 @@ export default function ProductDetail() {
                     <Check className="h-5 w-5 text-gold mt-0.5" />
                     <div>
                       <span className="font-medium">Pant:</span>
-                      <span className="text-muted-foreground ml-2">{product.pantDetails}</span>
+                      <span className="text-muted-foreground ml-2">{product.pant_details}</span>
                     </div>
                   </div>
                   <div className="flex items-start gap-2">
                     <Check className="h-5 w-5 text-gold mt-0.5" />
                     <div>
                       <span className="font-medium">Shirt:</span>
-                      <span className="text-muted-foreground ml-2">{product.shirtDetails}</span>
+                      <span className="text-muted-foreground ml-2">{product.shirt_details}</span>
                     </div>
                   </div>
                 </div>
@@ -115,11 +144,11 @@ export default function ProductDetail() {
               {/* Price */}
               <div className="flex items-baseline gap-4">
                 <span className="font-display text-4xl font-bold">
-                  ₹{product.price.toLocaleString()}
+                  ₹{Number(product.price).toLocaleString()}
                 </span>
-                {product.originalPrice && (
+                {product.original_price && (
                   <span className="text-muted-foreground line-through text-xl">
-                    ₹{product.originalPrice.toLocaleString()}
+                    ₹{Number(product.original_price).toLocaleString()}
                   </span>
                 )}
               </div>
@@ -128,22 +157,26 @@ export default function ProductDetail() {
               <div>
                 <label className="block font-medium mb-3">Select Size</label>
                 <div className="flex flex-wrap gap-3">
-                  {product.sizes.map((size) => (
-                    <button
-                      key={size.size}
-                      onClick={() => size.quantity > 0 && setSelectedSize(size.size)}
-                      disabled={size.quantity === 0}
-                      className={`w-14 h-14 rounded-lg border-2 font-medium transition-all ${
-                        selectedSize === size.size
-                          ? 'border-gold bg-gold text-charcoal'
-                          : size.quantity > 0
-                          ? 'border-border hover:border-gold'
-                          : 'border-border/50 text-muted-foreground/50 cursor-not-allowed line-through'
-                      }`}
-                    >
-                      {size.size}
-                    </button>
-                  ))}
+                  {sizes.map((size) => {
+                    const sizeStock = product.stock.find((s) => s.size === size);
+                    const qty = sizeStock?.quantity || 0;
+                    return (
+                      <button
+                        key={size}
+                        onClick={() => qty > 0 && setSelectedSize(size)}
+                        disabled={qty === 0}
+                        className={`w-14 h-14 rounded-lg border-2 font-medium transition-all ${
+                          selectedSize === size
+                            ? 'border-gold bg-gold text-charcoal'
+                            : qty > 0
+                            ? 'border-border hover:border-gold'
+                            : 'border-border/50 text-muted-foreground/50 cursor-not-allowed line-through'
+                        }`}
+                      >
+                        {size}
+                      </button>
+                    );
+                  })}
                 </div>
                 {selectedSizeStock && (
                   <p className="text-sm text-muted-foreground mt-2">

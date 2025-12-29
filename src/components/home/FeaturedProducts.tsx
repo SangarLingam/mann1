@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
-import { products } from '@/data/products';
+import { ArrowRight, Loader2 } from 'lucide-react';
+import { useFeaturedProducts } from '@/hooks/useProducts';
 import { ProductCard } from '@/components/products/ProductCard';
 import { Button } from '@/components/ui/button';
 
 export function FeaturedProducts() {
-  const featuredProducts = products.filter((p) => p.featured).slice(0, 4);
+  const { data: products, isLoading } = useFeaturedProducts();
 
   return (
     <section className="py-24 bg-background">
@@ -24,17 +24,23 @@ export function FeaturedProducts() {
         </div>
 
         {/* Products Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {featuredProducts.map((product, index) => (
-            <div
-              key={product.id}
-              className="animate-fade-up"
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              <ProductCard product={product} />
-            </div>
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-gold" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {products?.map((product, index) => (
+              <div
+                key={product.id}
+                className="animate-fade-up"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <ProductCard product={product} />
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* View All Button */}
         <div className="text-center mt-12">

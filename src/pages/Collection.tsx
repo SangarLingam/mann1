@@ -1,28 +1,33 @@
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search, SlidersHorizontal, X } from 'lucide-react';
+import { Search, SlidersHorizontal, X, Loader2 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { ProductCard } from '@/components/products/ProductCard';
-import { products, categories } from '@/data/products';
+import { useProducts } from '@/hooks/useProducts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+
+const categories = ['All', 'Formal', 'Business Casual', 'Casual'];
 
 export default function Collection() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   
+  const { data: products, isLoading } = useProducts();
   const selectedCategory = searchParams.get('category') || 'All';
 
   const filteredProducts = useMemo(() => {
+    if (!products) return [];
+    
     return products.filter((product) => {
       const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
       const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           product.description.toLowerCase().includes(searchQuery.toLowerCase());
+                           (product.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
       return matchesCategory && matchesSearch;
     });
-  }, [selectedCategory, searchQuery]);
+  }, [products, selectedCategory, searchQuery]);
 
   const handleCategoryChange = (category: string) => {
     if (category === 'All') {
@@ -123,7 +128,11 @@ export default function Collection() {
           </div>
 
           {/* Products Grid */}
-          {filteredProducts.length > 0 ? (
+          {isLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="h-8 w-8 animate-spin text-gold" />
+            </div>
+          ) : filteredProducts.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredProducts.map((product, index) => (
                 <div
