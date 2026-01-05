@@ -141,10 +141,12 @@ export default function Cart() {
                   </div>
                 </div>
 
-                <Button variant="hero" className="w-full" size="lg">
-                  Proceed to Checkout
-                  <ArrowRight className="h-5 w-5 ml-2" />
-                </Button>
+                <Link to="/checkout" className="w-full">
+                  <Button variant="hero" className="w-full" size="lg">
+                    Proceed to Checkout
+                    <ArrowRight className="h-5 w-5 ml-2" />
+                  </Button>
+                </Link>
 
                 <p className="text-muted-foreground text-xs text-center mt-4">
                   Taxes calculated at checkout
