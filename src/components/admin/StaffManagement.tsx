@@ -289,16 +289,35 @@ export default function StaffManagement() {
         </div>
       </div>
 
-      <div className="bg-muted/50 rounded-lg p-4 text-sm">
-        <h4 className="font-medium mb-2">Temporary Test Credentials</h4>
-        <div className="space-y-1 text-muted-foreground">
-          <p><strong>Admin:</strong> admin@mann.store / admin123</p>
-          <p><strong>Staff:</strong> staff@mann.store / staff123</p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Shield className="h-5 w-5 text-red-600" />
+            <h4 className="font-semibold text-red-700 dark:text-red-400">Admin Account</h4>
+          </div>
+          <p className="text-sm font-mono">admin@mann.store</p>
+          <p className="text-sm font-mono">admin123</p>
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">
-          Note: Create these users via the "Add Staff Member" button above if they don't exist.
-        </p>
+        <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <UserPlus className="h-5 w-5 text-blue-600" />
+            <h4 className="font-semibold text-blue-700 dark:text-blue-400">Staff Account</h4>
+          </div>
+          <p className="text-sm font-mono">staff@mann.store</p>
+          <p className="text-sm font-mono">staff123</p>
+        </div>
+        <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <User className="h-5 w-5 text-green-600" />
+            <h4 className="font-semibold text-green-700 dark:text-green-400">Customer Account</h4>
+          </div>
+          <p className="text-sm font-mono">customer@test.com</p>
+          <p className="text-sm font-mono">customer123</p>
+        </div>
       </div>
+      <p className="text-xs text-muted-foreground mt-4">
+        👆 Create these accounts using the "Add Staff Member" button above. Customer accounts don't need roles.
+      </p>
     </div>
   );
 }

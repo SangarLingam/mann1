@@ -14,6 +14,7 @@ import {
   DollarSign,
   Boxes,
   Loader2,
+  Store,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useProducts } from '@/hooks/useProducts';
@@ -22,11 +23,14 @@ import { cn } from '@/lib/utils';
 import ProductManagement from '@/components/admin/ProductManagement';
 import OrderManagement from '@/components/admin/OrderManagement';
 import StaffManagement from '@/components/admin/StaffManagement';
+import { POSModule } from '@/components/admin/POSModule';
+import { AnalyticsDashboard } from '@/components/admin/AnalyticsDashboard';
 
-type TabType = 'dashboard' | 'products' | 'orders' | 'staff' | 'reports' | 'settings';
+type TabType = 'dashboard' | 'products' | 'orders' | 'staff' | 'reports' | 'settings' | 'pos';
 
 const sidebarItems: { icon: typeof LayoutDashboard; label: string; tab: TabType }[] = [
   { icon: LayoutDashboard, label: 'Dashboard', tab: 'dashboard' },
+  { icon: Store, label: 'POS', tab: 'pos' },
   { icon: Package, label: 'Products', tab: 'products' },
   { icon: ShoppingCart, label: 'Orders', tab: 'orders' },
   { icon: Users, label: 'Staff', tab: 'staff' },
@@ -120,14 +124,10 @@ export default function Admin() {
         return <OrderManagement />;
       case 'staff':
         return <StaffManagement />;
+      case 'pos':
+        return <POSModule />;
       case 'reports':
-        return (
-          <div className="text-center py-12">
-            <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="font-display text-xl font-bold mb-2">Reports Coming Soon</h3>
-            <p className="text-muted-foreground">Sales analytics and reports will be available here.</p>
-          </div>
-        );
+        return <AnalyticsDashboard />;
       case 'settings':
         return (
           <div className="text-center py-12">
